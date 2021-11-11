@@ -121,7 +121,7 @@ impl UpChannel {
         UpChannel(channel)
     }
 
-    fn channel(&self) -> &mut rtt::RttChannel {
+    fn channel(&mut self) -> &mut rtt::RttChannel {
         unsafe { &mut *self.0 }
     }
 
@@ -147,7 +147,7 @@ impl UpChannel {
     }
 
     /// Gets the current blocking mode of the channel. The default is `NoBlockSkip`.
-    pub fn mode(&self) -> ChannelMode {
+    pub fn mode(&mut self) -> ChannelMode {
         self.channel().mode()
     }
 
@@ -288,11 +288,12 @@ impl TerminalChannel {
     pub fn write(&mut self, number: u8) -> TerminalWriter {
         const TERMINAL_ID: [u8; 16] = *b"0123456789ABCDEF";
 
+        let mode = self.channel.mode();
         let mut writer = self.channel.channel().writer();
 
+        
         if number != self.current {
             // The terminal switch command must be sent in full so the mode cannot be NoBlockTrim
-            let mode = self.channel.mode();
             let mode = if mode == ChannelMode::NoBlockTrim {
                 ChannelMode::NoBlockSkip
             } else {
@@ -312,7 +313,7 @@ impl TerminalChannel {
     }
 
     /// Gets the current blocking mode of the channel. The default is `NoBlockSkip`.
-    pub fn mode(&self) -> ChannelMode {
+    pub fn mode(&mut self) -> ChannelMode {
         self.channel.mode()
     }
 

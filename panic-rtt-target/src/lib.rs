@@ -44,8 +44,8 @@
 use core::{
     fmt::Write,
     panic::PanicInfo,
-    sync::atomic::{compiler_fence, Ordering::SeqCst},
 };
+use atomic_polyfill::{compiler_fence, Ordering::SeqCst};
 
 #[allow(unused)]
 use rtt_target::{ChannelMode, UpChannel};
@@ -69,7 +69,28 @@ fn panic(info: &PanicInfo) -> ! {
     }
 }
 
-#[cfg(not(any(feature = "cortex-m")))]
+#[cfg(feature = "riscv")]
+#[inline(never)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    use riscv::interrupt;
+
+    unsafe {
+        interrupt::disable();
+    }
+
+    if let Some(mut channel) = unsafe { UpChannel::conjure(0) } {
+        channel.set_mode(ChannelMode::BlockIfFull);
+
+        writeln!(channel, "{}", info).ok();
+    }
+
+    loop {
+        compiler_fence(SeqCst);
+    }
+}
+
+#[cfg(not(any(feature = "cortex-m", feature = "riscv")))]
 compile_error!(concat!(
     "You must specify a platform feature for panic-rtt-target, such as 'cortex-m'.\r\n",
     "Example:\r\n",
