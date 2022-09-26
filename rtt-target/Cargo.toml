@@ -12,4 +12,4 @@ repository = "https://github.com/mvirkkunen/rtt-target"
 [dependencies]
 ufmt-write = "0.1.0"
 critical-section = "1.0.0"
-
+atomic-polyfill = "1.0"
